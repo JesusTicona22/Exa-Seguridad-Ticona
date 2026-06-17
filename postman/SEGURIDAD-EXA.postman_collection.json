@@ -1,0 +1,341 @@
+{
+  "info": {
+    "_postman_id": "c9b6f271-a8d1-4a2a-86ca-seguridadexa",
+    "name": "SEGURIDAD-EXA Hotel",
+    "description": "Coleccion lista para usar: login, hoteles, categorias y CRUD completo de habitaciones.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "00 Health",
+      "item": [
+        {
+          "name": "Gateway Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8130/actuator/health",
+            "description": "GET http://localhost:8130/actuator/health"
+          }
+        },
+        {
+          "name": "Auth Health Directo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8184/q/health",
+            "description": "GET http://localhost:8184/q/health"
+          }
+        },
+        {
+          "name": "Habitacion Health Directo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8182/q/health",
+            "description": "GET http://localhost:8182/q/health"
+          }
+        },
+        {
+          "name": "Hotel Health Directo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8185/q/health",
+            "description": "GET http://localhost:8185/q/health"
+          }
+        },
+        {
+          "name": "Categoria Health Directo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8186/q/health",
+            "description": "GET http://localhost:8186/q/health"
+          }
+        },
+        {
+          "name": "Consul Services",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8510/v1/catalog/services",
+            "description": "GET http://localhost:8510/v1/catalog/services"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 Auth",
+      "item": [
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login correcto', function () { pm.response.to.have.status(200); });",
+                  "const data = pm.response.json();",
+                  "if (data.token) pm.environment.set('token', data.token);",
+                  "if (data.rol) pm.environment.set('rol', data.rol);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": "http://localhost:8130/api/auth/login",
+            "description": "POST http://localhost:8130/api/auth/login"
+          }
+        },
+        {
+          "name": "Listar Permisos ROLE_ADMIN",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8130/api/auth/seguridad/roles/ROLE_ADMIN/permisos",
+            "description": "GET http://localhost:8130/api/auth/seguridad/roles/ROLE_ADMIN/permisos"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Hotel",
+      "item": [
+        {
+          "name": "Listar Hoteles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8130/api/hoteles",
+            "description": "GET http://localhost:8130/api/hoteles"
+          }
+        },
+        {
+          "name": "Obtener Hotel HOT001",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8130/api/hoteles/HOT001",
+            "description": "GET http://localhost:8130/api/hoteles/HOT001"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Categoria",
+      "item": [
+        {
+          "name": "Listar Categorias",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8130/api/categorias",
+            "description": "GET http://localhost:8130/api/categorias"
+          }
+        },
+        {
+          "name": "Obtener Categoria CAT001",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8130/api/categorias/CAT001",
+            "description": "GET http://localhost:8130/api/categorias/CAT001"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Habitacion",
+      "item": [
+        {
+          "name": "Listar Habitaciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8130/api/habitaciones",
+            "description": "GET http://localhost:8130/api/habitaciones"
+          }
+        },
+        {
+          "name": "Crear Habitacion HAB999",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Habitacion creada', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201, 409]); });",
+                  "pm.environment.set('codigo_habitacion', 'HAB999');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigoHabitacion\": \"HAB999\",\n  \"codigoHotel\": \"HOT001\",\n  \"nroHabitacion\": \"202\",\n  \"codigoCategoria\": \"CAT001\",\n  \"capacidadMaxima\": 2,\n  \"estado\": \"A\"\n}"
+            },
+            "url": "http://localhost:8130/api/habitaciones",
+            "description": "POST http://localhost:8130/api/habitaciones"
+          }
+        },
+        {
+          "name": "Obtener Habitacion HAB999",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8130/api/habitaciones/HAB999",
+            "description": "GET http://localhost:8130/api/habitaciones/HAB999"
+          }
+        },
+        {
+          "name": "Actualizar Habitacion HAB999",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigoHotel\": \"HOT001\",\n  \"nroHabitacion\": \"203\",\n  \"codigoCategoria\": \"CAT002\",\n  \"capacidadMaxima\": 3,\n  \"estado\": \"A\"\n}"
+            },
+            "url": "http://localhost:8130/api/habitaciones/HAB999",
+            "description": "PUT http://localhost:8130/api/habitaciones/HAB999"
+          }
+        },
+        {
+          "name": "Desactivar Habitacion HAB999",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "http://localhost:8130/api/habitaciones/HAB999/desactivar",
+            "description": "PUT http://localhost:8130/api/habitaciones/HAB999/desactivar"
+          }
+        },
+        {
+          "name": "Activar Habitacion HAB999",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": "http://localhost:8130/api/habitaciones/HAB999/activar",
+            "description": "PUT http://localhost:8130/api/habitaciones/HAB999/activar"
+          }
+        },
+        {
+          "name": "Eliminar Habitacion HAB999",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "http://localhost:8130/api/habitaciones/HAB999",
+            "description": "DELETE http://localhost:8130/api/habitaciones/HAB999"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Seguridad",
+      "item": [
+        {
+          "name": "Crear Rol",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.id) pm.environment.set('rol_id', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"ROLE_TEST\",\n  \"descripcion\": \"Rol de prueba\"\n}"
+            },
+            "url": "http://localhost:8130/api/auth/seguridad/roles",
+            "description": "POST http://localhost:8130/api/auth/seguridad/roles"
+          }
+        },
+        {
+          "name": "Crear Permiso Habitaciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.id) pm.environment.set('permiso_id', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"TEST_LISTAR_HABITACIONES\",\n  \"metodo\": \"GET\",\n  \"endpoint\": \"/habitaciones/**\"\n}"
+            },
+            "url": "http://localhost:8130/api/auth/seguridad/permisos",
+            "description": "POST http://localhost:8130/api/auth/seguridad/permisos"
+          }
+        },
+        {
+          "name": "Asignar Rol a Usuario",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": 1,\n  \"rolId\": 1\n}"
+            },
+            "url": "http://localhost:8130/api/auth/seguridad/usuarios/asignar-rol",
+            "description": "POST http://localhost:8130/api/auth/seguridad/usuarios/asignar-rol"
+          }
+        },
+        {
+          "name": "Asignar Permiso a Rol",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rolId\": 1,\n  \"permisoId\": 1\n}"
+            },
+            "url": "http://localhost:8130/api/auth/seguridad/roles/asignar-permiso",
+            "description": "POST http://localhost:8130/api/auth/seguridad/roles/asignar-permiso"
+          }
+        },
+        {
+          "name": "Crear Permisos Default",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "http://localhost:8130/api/auth/seguridad/permisos/default",
+            "description": "POST http://localhost:8130/api/auth/seguridad/permisos/default"
+          }
+        }
+      ]
+    }
+  ]
+}

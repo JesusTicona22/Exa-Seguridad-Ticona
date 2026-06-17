@@ -1,0 +1,45 @@
+server:
+  port: 8030
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+
+    consul:
+      host: consul
+      port: 8500
+      discovery:
+        enabled: true
+
+    gateway:
+      routes:
+
+        - id: habitacion
+          uri: lb://ms-habitacion
+          predicates:
+            - Path=/api/habitaciones/**
+          filters:
+            - StripPrefix=1
+
+        - id: hotel
+          uri: lb://ms-hotel
+          predicates:
+            - Path=/api/hoteles/**
+          filters:
+            - StripPrefix=1
+
+        - id: categoria
+          uri: lb://ms-categoria
+          predicates:
+            - Path=/api/categorias/**
+          filters:
+            - StripPrefix=1
+
+        - id: auth
+          uri: lb://ms-auth
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1

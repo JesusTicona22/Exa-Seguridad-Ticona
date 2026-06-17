@@ -1,0 +1,129 @@
+name: SEGURIDAD-EXA
+
+services:
+
+  consul:
+    image: hashicorp/consul:latest
+    container_name: seguridad-exa-consul
+    ports:
+      - "8510:8500"
+    command: agent -dev -client=0.0.0.0
+
+  mysql-local:
+    image: mysql:8.0
+    container_name: seguridad-exa-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql123
+      MYSQL_DATABASE: seguridad_exa
+    ports:
+      - "3317:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pmysql123"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  ms-habitacion:
+    build: ./ms.habitacion
+    container_name: seguridad-exa-ms-habitacion
+    restart: on-failure
+    ports:
+      - "8182:8082"
+    volumes:
+      - ./central-config:/app/central-config
+    depends_on:
+      mysql-local:
+        condition: service_healthy
+      consul:
+        condition: service_started
+
+  ms-hotel:
+    build: ./ms.hotel
+    container_name: seguridad-exa-ms-hotel
+    restart: on-failure
+    ports:
+      - "8185:8085"
+    volumes:
+      - ./central-config:/app/central-config
+    depends_on:
+      mysql-local:
+        condition: service_healthy
+      consul:
+        condition: service_started
+
+  ms-categoria:
+    build: ./ms.categoria
+    container_name: seguridad-exa-ms-categoria
+    restart: on-failure
+    ports:
+      - "8186:8086"
+    volumes:
+      - ./central-config:/app/central-config
+    depends_on:
+      mysql-local:
+        condition: service_healthy
+      consul:
+        condition: service_started
+
+  ms-auth:
+    build: ./ms.auth
+    container_name: seguridad-exa-ms-auth
+    restart: on-failure
+    ports:
+      - "8184:8084"
+    depends_on:
+      mysql-local:
+        condition: service_healthy
+      consul:
+        condition: service_started
+
+  api-gateway:
+    build: ./api.gateway
+    container_name: seguridad-exa-api-gateway
+    restart: on-failure
+    ports:
+      - "8130:8030"
+    depends_on:
+      consul:
+        condition: service_started
+      ms-habitacion:
+        condition: service_started
+      ms-hotel:
+        condition: service_started
+      ms-categoria:
+        condition: service_started
+      ms-auth:
+        condition: service_started
+
+  consul-registrator:
+    image: curlimages/curl:latest
+    container_name: seguridad-exa-consul-registrator
+    depends_on:
+      - consul
+      - ms-habitacion
+      - ms-hotel
+      - ms-categoria
+      - ms-auth
+    entrypoint: >
+      sh -c "
+      sleep 40 &&
+
+      curl -X PUT http://consul:8500/v1/agent/service/register
+      -H 'Content-Type: application/json'
+      -d '{\"Name\":\"ms-habitacion\",\"ID\":\"ms-habitacion-1\",\"Address\":\"ms-habitacion\",\"Port\":8082,\"Check\":{\"HTTP\":\"http://ms-habitacion:8082/q/health\",\"Interval\":\"10s\"}}' &&
+
+      curl -X PUT http://consul:8500/v1/agent/service/register
+      -H 'Content-Type: application/json'
+      -d '{\"Name\":\"ms-hotel\",\"ID\":\"ms-hotel-1\",\"Address\":\"ms-hotel\",\"Port\":8085,\"Check\":{\"HTTP\":\"http://ms-hotel:8085/q/health\",\"Interval\":\"10s\"}}' &&
+
+      curl -X PUT http://consul:8500/v1/agent/service/register
+      -H 'Content-Type: application/json'
+      -d '{\"Name\":\"ms-categoria\",\"ID\":\"ms-categoria-1\",\"Address\":\"ms-categoria\",\"Port\":8086,\"Check\":{\"HTTP\":\"http://ms-categoria:8086/q/health\",\"Interval\":\"10s\"}}' &&
+
+      curl -X PUT http://consul:8500/v1/agent/service/register
+      -H 'Content-Type: application/json'
+      -d '{\"Name\":\"ms-auth\",\"ID\":\"ms-auth-1\",\"Address\":\"ms-auth\",\"Port\":8084,\"Check\":{\"HTTP\":\"http://ms-auth:8084/q/health\",\"Interval\":\"10s\"}}' &&
+
+      echo 'Servicios registrados en Consul correctamente'
+      "
